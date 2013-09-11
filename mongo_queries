@@ -1,0 +1,126 @@
+// total items db.items.count()
+//  sold items db.items.find( { 'sold' : true } ).count()
+//  not sold items db.items.find( { 'sold' : false } ).count()
+
+
+
+var getCategories = function() {
+  var item;
+  var categories = { };
+  var items = db.items.find({sold: true});
+
+  while(items.hasNext()) { 
+    item = items.next();
+    
+    attachCategory(item.categories, item, categories);
+  }
+
+  return categories;
+};
+
+var attachCategory = function(categoryIds, item, parentCategories) {
+  if (categoryIds.length === 0) return;
+  
+  var categoryId = categoryIds[0];
+  var categoryTitles = item.categoryTitles;
+
+  if (!(categoryId in parentCategories)) {
+    parentCategories[categoryId] = { 
+      name: categoryTitles[categoryTitles.length - categoryIds.length],
+      siblings: { },
+      items: [ ]
+    };
+  }
+
+  if (categoryIds.length === 1) {
+    attachItem(parentCategories[categoryId].items, item);
+    return;
+  }
+
+  categoryIds.shift();
+
+  attachCategory(categoryIds, item, parentCategories[categoryId].siblings);
+};
+
+var attachItem = function(parentCategoryItems, item) {
+  parentCategoryItems.push({
+    price: item.endPrice,
+    date: item.createdAt
+  });
+};
+
+/** first iteration ** /
+
+var mapCategory = function() {
+  var key = this.categories.toString().replace(/,/g, "");
+  var value = { 
+    price: this.endPrice,
+    name: this.categoryTitles.toString()
+  };
+
+  emit(key, value);
+}
+
+var reduceCategories = function(key, values) {
+  var number_of_items = 0;
+  var total = 0;
+  var name = "";
+
+  // split the key/category title if needed
+  
+  values.forEach(function(value) {
+    if (value.price && value.name) {
+      total += value.price / 100.0;
+      number_of_items += 1;
+      name = value.name;
+    }
+  });
+  
+  return {
+    category_name: name,
+    average_price: total / number_of_items,
+    number_of_items: number_of_items
+  }
+}
+
+db.items.mapReduce(mapCategory, reduceCategories, { out: { reduce: "results_per_category" }, query: { sold: true }})
+
+/** first iteration ** /
+
+/** second iteration ** /
+
+var mapCategory = function() {
+  var monthNamesShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var key = monthNamesShort[this.createdAt.getMonth()];
+
+  var value = { 
+    price: this.endPrice,
+    name: this.categoryTitles.toString()
+  };
+
+  emit(key, value);
+}
+
+var reduceCategories = function(key, values) {
+  var number_of_items = 0;
+  var total = 0;
+  var name = "";
+
+  // split the key/category title if needed
+  
+  values.forEach(function(value) {
+    if (value.price && value.name) {
+      total += value.price / 100.0;
+      number_of_items += 1;
+      name = value.name;
+    }
+  });
+  
+  return {
+    category_name: name,
+    average_price: total / number_of_items,
+    number_of_items: number_of_items
+  }
+}
+
+db.items.mapReduce(mapCategory, reduceCategories, { out: { reduce: "category_per_date" }, query: { sold: true }})

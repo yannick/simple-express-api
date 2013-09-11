@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>demo</title>
+  <script type='text/javascript' src='https://code.jquery.com/jquery-1.9.1.js'></script>
+  <link rel="stylesheet" type="text/css" href="http://fiddle.jshell.net/css/result-light.css">
+  
+  <style type='text/css'>
+
+  </style>
+  <script type='text/javascript'>//<![CDATA[ 
+    var start_item = 6;
+    var end_item = 11;
+    function getCategories(data) {
+      var categories = []
+      for(var i=start_item; i<end_item; i++) {
+        categories.push(data[i].value.category_name);
+      }
+      return categories;
+    }
+    function getPrices(data) {
+     var categories = []
+      for(var i=start_item; i<end_item; i++) {
+        categories.push(data[i].value.average_price);
+      }
+      return categories; 
+    }
+    function getNumberOfItems(data) {
+     var categories = []
+      for(var i=start_item; i<end_item; i++) {
+        categories.push(data[i].value.number_of_items);
+      }
+      return categories; 
+    }
+    function initChart(data) {
+      $('#container').highcharts({
+        chart: {
+          zoomType: 'xy'
+        },
+        title: {
+          text: 'Average Category Spending'
+        },
+        xAxis: [{
+          categories: getCategories(data)
+        }],
+        yAxis: [{ // Primary yAxis
+          labels: {
+              format: '{value} CHF',
+              style: {
+                  color: '#89A54E'
+              }
+          },
+          title: {
+              text: 'Average Price',
+              style: {
+                  color: '#89A54E'
+              }
+          }
+          }, { // Secondary yAxis
+          title: {
+              text: 'Number of Items',
+              style: {
+                  color: '#4572A7'
+              }
+          },
+          labels: {
+              format: '{value}',
+              style: {
+                  color: '#4572A7'
+              }
+          },
+          opposite: true
+        }],
+        tooltip: {
+          shared: true
+        },
+        series: [{
+          name: 'Number of Items',
+          color: '#4572A7',
+          type: 'column',
+          yAxis: 1,
+          data: getNumberOfItems(data),
+        }, 
+        {
+          name: 'Average Price',
+          color: '#89A54E',
+          type: 'column',
+          data: getPrices(data),
+          tooltip: {
+              valueSuffix: ' CHF'
+          }
+        }]
+      });
+    }
+    $(function () {
+      var url = "http://localhost:4730/items";
+      $.get("http://localhost:4730/items", function (data) {
+        initChart(data);
+      });
+    });
+    //]]>  
+  </script>
+</head>
+  <body>
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+
+    <div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+  </body>
+</html>
